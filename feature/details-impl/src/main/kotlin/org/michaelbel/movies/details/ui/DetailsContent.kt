@@ -10,11 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -30,6 +26,7 @@ import coil.request.ImageRequest
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.placeholder
+import org.michaelbel.movies.common.converter.DateConverter
 import org.michaelbel.movies.details.ui.preview.MoviePreviewParameterProvider
 import org.michaelbel.movies.details_impl.R
 import org.michaelbel.movies.domain.data.entity.MovieDb
@@ -47,12 +44,17 @@ internal fun DetailsContent(
     val context: Context = LocalContext.current
     val scrollState: ScrollState = rememberScrollState()
     var isNoImageVisible: Boolean by remember { mutableStateOf(false) }
+    var movieReleaseDate = ""
+    if (movie.releaseDate.isNotEmpty()){
+        movieReleaseDate = DateConverter.formatDisplayDate(movie.releaseDate)
+        movieReleaseDate = stringResource(id = R.string.release_date) + " " + movieReleaseDate
+    }
 
     ConstraintLayout(
         modifier = modifier
             .verticalScroll(scrollState)
     ) {
-        val (image, noImageText, title, overview) = createRefs()
+        val (image, noImageText, title, overview, releaseDate) = createRefs()
 
         val imageRequest: ImageRequest? = if (placeholder) {
             null
@@ -181,12 +183,46 @@ internal fun DetailsContent(
                 }
         }
 
+        val releaseDateModifier: Modifier = if (placeholder) {
+            Modifier
+                .constrainAs(releaseDate) {
+                    width = Dimension.fillToConstraints
+                    height = Dimension.wrapContent
+                    start.linkTo(parent.start, 16.dp)
+                    top.linkTo(overview.bottom, 8.dp)
+                    end.linkTo(parent.end, 16.dp)
+                }
+                .placeholder(
+                    visible = true,
+                    color = MaterialTheme.colorScheme.inversePrimary,
+                    shape = MaterialTheme.shapes.small,
+                    highlight = PlaceholderHighlight.fade()
+                )
+        } else {
+            Modifier
+                .constrainAs(releaseDate) {
+                    width = Dimension.fillToConstraints
+                    height = Dimension.wrapContent
+                    start.linkTo(parent.start, 16.dp)
+                    top.linkTo(overview.bottom, 8.dp)
+                    end.linkTo(parent.end, 16.dp)
+                }
+        }
+
         Text(
             text = movie.overview,
             modifier = overviewModifier,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             overflow = TextOverflow.Ellipsis,
             maxLines = 10,
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Text(
+            text = movieReleaseDate,
+            modifier = releaseDateModifier,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyMedium
         )
     }
